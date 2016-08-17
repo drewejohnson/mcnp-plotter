@@ -29,6 +29,7 @@ def showCommands():
     print("keff <out1> <out2> - plot convergence of eigenvalue for 1 or 2 MCNP outputs")
     print("celltally <mode> <out1> - plot cell tally data for 1 MCNP output.\n  Mode: cont or surf")
     print("fmesh <mode> <name> <xy/xz/yz> - plot fmesh tallies across two coordinates from output.\n  Mode: cont or surf\n  Default coord: xy")
+    print("get fmesh <name> - save fmesh tally results into .csv")
     print("runDir <working directory> - set the working directory to be cd/runDir")
     print("quit - leave this terminal")
     print("help - show this menu")
@@ -124,9 +125,15 @@ def mcplotter():
         # plot data from csv/summary.csv
         if uIn == "plot summary":
             print(mpt.main("summary.csv",runDir,cpath,fpath),end="")
-        # obtain summary data from mcnp outputs
-        elif uIn == "get summary":
-            print(getSummary(runDir),end="")
+        elif uInS[0] == "get":
+            # obtain summary data from mcnp outputs
+            if uInS[1] == "summary":
+                print(getSummary(runDir),end="")
+            # save fmesh tally results into csv file
+            elif uInS[1] == "fmesh":
+                print(pouts.getFmesh(runDir,mpath,cpath,uInS[2]),end="")
+            else:
+                print("Bad input.")
         # plot convergence of keff
         elif uIn[:4] == 'keff':
             if len(uInS) == 2:

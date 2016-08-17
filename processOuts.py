@@ -29,6 +29,7 @@ reEOB = r' ([\*=]+)'     # end of data block will have either * or = as the firs
 reKCODE = r'.+[kcode]{5}|[KCODE]{5} (\d+) '         # match kcode line and store nps/cycle
 reFinalR = r'.+final result +([\d\.]+) +([\d\.]+)'  # match final eigenvalue result and stdv
 reRunT = r' +computer time = +(\d+\.\d{2})'            # match run time
+reFmesh = r' ([\d\.-]+) +([\d\.-]+) +([\d\.-]+) +([\d\.Ee]+[-|\+]\d{2}) ([\d\.Ee]+[-|\+]\d{2})'
 #--------
 # Classes
 #--------
@@ -173,6 +174,36 @@ def getCellLoc(runDir,mpath):
                 Cell.cells[line[0]].loc = (line[1],line[2],line[3])
         i += 1
     return miss
+
+def getFmesh(runDir,mpath,cpath,infile):
+    """Save the fmesh tally results from file infile as a .csv"""
+    try:
+        f = open(runDir+mpath+infile,"r")
+    except IOError:
+        return "Could not access file {0}{1}{2}.\n  Make sure fmesh tally results are in {1}\n".\
+            format(runDir,mpath,infile)
+
+    data = readFmesh(f)
+    f = open(runDir+cpath+infile+".csv","w",newline="")
+    cw = csv.writer(f)
+    cw.writerow(("X","Y","Z","Result","Rel Error"))
+    cw.writerows(data)
+    f.close()
+    return "Saved fmesh tally results to {0}{1}{2}.csv\n".format(runDir,cpath,infile)
+
+
+def readFmesh(fObj):
+    """Return columnated data from fmesh file object fObj as list of tuples. Also closes file fObj"""
+
+    lines = fObj.readlines()
+    fObj.close()
+    data = []
+    for line in lines:
+        mat = re.findall(reFmesh,line)
+        if mat != []:
+            # print(mat)
+            data.append((float(mat[0][0]),float(mat[0][1]),float(mat[0][2]),float(mat[0][3]),float(mat[0][4])))
+    return data
 #-----------------
 # Main Code
 #----------------

@@ -21,6 +21,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 from mpl_toolkits.mplot3d import Axes3D     # 3D plotter
 from matplotlib import cm                   # color maps
+import processOuts as pouts
 #----------
 # Constants
 #----------
@@ -291,12 +292,6 @@ def plotFmesh(runDir,mpath,fpath,mode,fName,coord):
         return "File {0} not accessible. Could be in wrong directory.\n  Please move into {1}{2}\n".\
             format(fName,runDir,mpath)
 
-    lines = f.readlines()
-    c1 = []
-    c2 = []         # vectors to contain all the position data
-    axe1 = []
-    axe2 = []       # vectors to contain unique position data
-    tally = []
     if coord[0] == "x":
         axe1Col = 0
         label1 = "X Position (cm)"
@@ -315,16 +310,22 @@ def plotFmesh(runDir,mpath,fpath,mode,fName,coord):
     elif coord[1] == "z":
         axe2Col = 2
         label2 = "Z Position (cm)"
-    for line in lines:
-        if re.findall(reFmesh,line) != []:
-            mat = re.findall(reFmesh,line)
-            c1.append(float(mat[0][axe1Col]))
-            c2.append(float(mat[0][axe2Col]))
-            if c1[-1] not in axe1:
-                axe1.append(c1[-1])
-            if c2[-1] not in axe2:
-                axe2.append(c2[-1])
-            tally.append(float(mat[0][3]))
+
+    data = pouts.readFmesh(f)
+    # returns list of tuples of fmesh data - x,y,z,result,rel error
+    c1 = []
+    c2 = []         # vectors to contain all the position data
+    axe1 = []
+    axe2 = []       # vectors to contain unique position data
+    tally = []
+    for tpl in data:
+        c1.append(tpl[axe1Col])
+        if c1[-1] not in axe1:
+            axe1.append(c1[-1])
+        c2.append(tpl[axe2Col])
+        if c2[-1] not in axe2:
+            axe2.append(c2[-1])
+        tally.append(tpl[3])
 #----SOME DAY TURN THIS INTO A FUNCTION ON ITS OWN VVVVVV
     axe1.sort()
     axe2.sort()
@@ -333,7 +334,6 @@ def plotFmesh(runDir,mpath,fpath,mode,fName,coord):
     len2 = len(axe2)
     tmat = np.empty([len2,len1])
     vals = len(c1)
-    print(len1,len2,A1.shape,A2.shape)
     for jj in range(len2):
         for ii in range(len1):
             for r in range(vals):
