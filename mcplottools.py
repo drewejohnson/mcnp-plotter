@@ -25,6 +25,7 @@ from matplotlib import cm                   # color maps
 # Constants
 #----------
 pInput = "Save figure(s)? [y/n]\n:  "
+reFmesh = r' ([\d\.-]+) +([\d\.-]+) +([\d\.-]+) +([\d\.Ee]+[-|\+]\d{2}) ([\d\.Ee]+[-|\+]\d{2})'
 #--------
 # Classes
 #--------
@@ -273,4 +274,87 @@ def main(sumFile,runDir,cpath,fpath):
         print("  "+saveFig(runDir+fpath+runN+"eig"+runExt,eigFig),end="")
         print("  "+saveFig(runDir+fpath+runN+"run"+runExt,runFig),end="")
         print("  "+saveFig(runDir+fpath+runN+"stdv"+runExt,stdvFig),end="")
+    return ""
+
+
+def plotFmesh(runDir,mpath,fpath,mode,fName,coord):
+    """Plot the tally results from file runDir/mpath/fName across coordinates denoted by pair coord"""
+
+    if mode not in ["cont","surf"]:
+        return "Print method {0} not supported at this time. Only cont and surf\n".format(mode)
+    if coord not in ["xy","yx","zy","yz","xz","zx"]:
+        return "Coordinate pair {0} not supported at this time. Only pairs of x, y, and z\n".format(coord)
+
+    try:
+        f = open(runDir+mpath+fName,'r')
+    except IOError:
+        return "File {0} not accessible. Could be in wrong directory.\n  Please move into {1}{2}\n".\
+            format(fName,runDir,mpath)
+
+    lines = f.readlines()
+    c1 = []
+    c2 = []         # vectors to contain all the position data
+    axe1 = []
+    axe2 = []       # vectors to contain unique position data
+    tally = []
+    if coord[0] == "x":
+        axe1Col = 0
+        label1 = "X Position (cm)"
+    elif coord[0] == "y":
+        axe1Col = 1
+        label1 = "Y Position (cm)"
+    elif coord[0] == "z":
+        axe1Col = 2
+        label1 = "Z Position (cm)"
+    if coord[1] == "x":
+        axe2Col = 0
+        label2 = "X Position (cm)"
+    elif coord[1] == 'y':
+        axe2Col = 1
+        label2 = "Y Position (cm)"
+    elif coord[1] == "z":
+        axe2Col = 2
+        label2 = "Z Position (cm)"
+    for line in lines:
+        if re.findall(reFmesh,line) != []:
+            mat = re.findall(reFmesh,line)
+            c1.append(float(mat[0][axe1Col]))
+            c2.append(float(mat[0][axe2Col]))
+            if c1[-1] not in axe1:
+                axe1.append(c1[-1])
+            if c2[-1] not in axe2:
+                axe2.append(c2[-1])
+            tally.append(float(mat[0][3]))
+#----SOME DAY TURN THIS INTO A FUNCTION ON ITS OWN VVVVVV
+    axe1.sort()
+    axe2.sort()
+    A1,A2 = np.meshgrid(axe1,axe2)
+    len1 = len(axe1)
+    len2 = len(axe2)
+    tmat = np.empty([len2,len1])
+    vals = len(c1)
+    print(len1,len2,A1.shape,A2.shape)
+    for jj in range(len2):
+        for ii in range(len1):
+            for r in range(vals):
+                if A1[jj,ii] == c1[r] and A2[jj,ii] == c2[r]:
+                    tmat[len2-1-jj,ii] = tally[r]
+#----SOME DAY TURN THIS INTO A FUNCTION ON ITS OWN ^^^^^^
+    fmeshFig = plt.figure()
+    if mode == 'cont':
+        plt.contour(A1,A2,tmat)
+        plt.xlabel(label1)
+        plt.ylabel(label2)
+    elif mode == 'surf':
+        ax = fmeshFig.gca(projection='3d')
+        ax.plot_surface(A1,A2,tmat,rstride=1,cstride=1,cmap = cm.coolwarm)
+        ax.set_xlabel(label1)
+        ax.set_ylabel(label2)
+        ax.set_zlabel("Tally Value")
+    plt.show()
+    printCheck = input(pInput)
+    if printCheck[0] == 'y':
+        runN,runExt = getPrintName(printCheck)
+        if runN != "":
+            return(saveFig(runDir+fpath+runN+mode+"fmesh"+runExt,fmeshFig))
     return ""
