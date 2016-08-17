@@ -28,6 +28,7 @@ def showCommands():
     print("plot summary - plot data from csv/summary.csv (effect of changing nps/cycle)")
     print("keff <out1> <out2> - plot convergence of eigenvalue for 1 or 2 MCNP outputs")
     print("celltally <mode> <out1> - plot cell tally data for 1 MCNP output.\n  Mode: cont or surf")
+    print("fmesh <mode> <name> <xy/xz/yz> - plot fmesh tallies across two coordinates from output.\n  Mode: cont or surf\n  Default coord: xy")
     print("runDir <working directory> - set the working directory to be cd/runDir")
     print("quit - leave this terminal")
     print("help - show this menu")
@@ -140,6 +141,14 @@ def mcplotter():
                 print("Bad input for cell tally. celltally <mode> <out1>")
             else:
                 print(mpt.plotCellTally(runDir,cpath,fpath,uIn.split()[2],uIn.split()[1]),end="")
+        # Plot results from fmesh tallies
+        elif uInS[0] == 'fmesh':
+            if len(uInS) == 3:
+                print(mpt.plotFmesh(runDir,mpath,fpath,uInS[1],uInS[2],"xy"),end="")
+            elif len(uInS) == 4:
+                print(mpt.plotFmesh(runDir,mpath,fpath,uInS[1],uInS[2],uInS[3]),end="")
+            else:
+                print("Bad input for fmesh.\nfmesh <mode> <name> <xy/xz/yz> - plot fmesh tallies across two coordinates from output.\n  Mode: cont or surf\n Default coord: xy")
         # leave this cursed terminal
         elif uIn == "quit":
             break
