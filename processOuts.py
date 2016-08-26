@@ -20,6 +20,7 @@
 #--------
 import re
 import csv
+import math
 #----------
 # Constants
 #----------
@@ -194,15 +195,26 @@ def getFmesh(runDir,mpath,cpath,infile):
 
 def readFmesh(fObj):
     """Return columnated data from fmesh file object fObj as list of tuples. Also closes file fObj"""
-
+    print("  Reading fmesh in from {0}".format(fObj.name))
     lines = fObj.readlines()
+    if len(lines) > 1000:
+        prog = True
+        l = 0
+
+    else:
+        prog = False
     fObj.close()
     data = []
     for line in lines:
+        if prog:
+            l += 1
+            if l % math.floor(len(lines)/10) == 0:
+                print("    {0} of {1} lines read".format(l,len(lines)))
         mat = re.findall(reFmesh,line)
         if mat != []:
             # print(mat)
             data.append((float(mat[0][0]),float(mat[0][1]),float(mat[0][2]),float(mat[0][3]),float(mat[0][4])))
+    print("  Done reading fmesh from {0}".format(fObj.name))
     return data
 #-----------------
 # Main Code
