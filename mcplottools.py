@@ -312,6 +312,10 @@ def plotFmesh(runDir,mpath,fpath,mode,fName,coord):
         label2 = "Z Position (cm)"
 
     data = pouts.readFmesh(f)
+    if len(data) > 1000:
+        prog = True
+    else:
+        prog = False
     # returns list of tuples of fmesh data - x,y,z,result,rel error
     c1 = []
     c2 = []         # vectors to contain all the position data
@@ -327,6 +331,8 @@ def plotFmesh(runDir,mpath,fpath,mode,fName,coord):
             axe2.append(c2[-1])
         tally.append(tpl[3])
 #----SOME DAY TURN THIS INTO A FUNCTION ON ITS OWN VVVVVV
+    if prog:
+        print("  Meshing data to plot")
     axe1.sort()
     axe2.sort()
     A1,A2 = np.meshgrid(axe1,axe2)
@@ -334,12 +340,16 @@ def plotFmesh(runDir,mpath,fpath,mode,fName,coord):
     len2 = len(axe2)
     tmat = np.empty([len2,len1])
     vals = len(c1)
+    if prog:
+        print("  Preparing plot matrices")
     for jj in range(len2):
         for ii in range(len1):
             for r in range(vals):
                 if A1[jj,ii] == c1[r] and A2[jj,ii] == c2[r]:
                     tmat[len2-1-jj,ii] = tally[r]
 #----SOME DAY TURN THIS INTO A FUNCTION ON ITS OWN ^^^^^^
+    if prog:
+        print("  Preparing to plot")
     fmeshFig = plt.figure()
     if mode == 'cont':
         plt.contour(A1,A2,tmat)
@@ -347,10 +357,20 @@ def plotFmesh(runDir,mpath,fpath,mode,fName,coord):
         plt.ylabel(label2)
     elif mode == 'surf':
         ax = fmeshFig.gca(projection='3d')
-        ax.plot_surface(A1,A2,tmat,rstride=1,cstride=1,cmap = cm.coolwarm)
+        #if prog:
+        #    rs,cs = A1.shape
+        #    rs = int(np.floor(rs*0.1))
+        #    cs = int(np.floor(cs*0.1))
+        #else:
+        #    rs = 1
+        #    cs = 1
+        rs = 1
+        cs = 1
+        ax.plot_surface(A1,A2,tmat,rstride=rs,cstride=cs,cmap = cm.coolwarm)
         ax.set_xlabel(label1)
         ax.set_ylabel(label2)
         ax.set_zlabel("Tally Value")
+        ax.azim=0
     plt.show()
     printCheck = input(pInput)
     if printCheck[0] == 'y':
